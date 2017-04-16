@@ -9,90 +9,6 @@ import gdal, glob, subprocess, os
 from osgeo.gdalconst import *
 from osgeo import ogr
 
-# def delete_Feature(input_shp,feature_list):
-#     driver = ogr.GetDriverByName("ESRI Shapefile")
-#     dataSource = driver.Open(input_shp, 0)
-#     layer = dataSource.GetLayer()
-#
-#      # Create the output LayerS
-#     outShapefile = input_shp[:-4]+'_del.shp'
-#     outDriver = ogr.GetDriverByName("ESRI Shapefile")
-#
-#     # Remove output shapefile if it already exists
-#     if os.path.exists(outShapefile):
-#         outDriver.DeleteDataSource(outShapefile)
-#
-#     # Create the output shapefile
-#     outDataSource = outDriver.CreateDataSource(outShapefile)
-#     out_lyr_name = os.path.splitext( os.path.split( outShapefile )[1] )[0]
-#     outLayer = outDataSource.CreateLayer( out_lyr_name, geom_type=ogr.wkbMultiPolygon )
-#
-#     # Add input Layer Fields to the output Layer if it is the one we want
-#     inLayerDefn = inLayer.GetLayerDefn()
-#     for i in range(0, inLayerDefn.GetFieldCount()):
-#         fieldDefn = inLayerDefn.GetFieldDefn(i)
-#         fieldName = fieldDefn.GetName()
-#         if fieldName not in field_name_target:
-#             continue
-#         outLayer.CreateField(fieldDefn)
-#
-#     # Get the output Layer's Feature Definition
-#     outLayerDefn = outLayer.GetLayerDefn()
-#
-#     # Add features to the ouput Layer
-#     for inFeature in inLayer:
-#         # Create output Feature
-#         outFeature = ogr.Feature(outLayerDefn)
-#
-#         # Add field values from input Layer
-#         for i in range(0, outLayerDefn.GetFieldCount()):
-#             fieldDefn = outLayerDefn.GetFieldDefn(i)
-#             fieldName = fieldDefn.GetName()
-#             if fieldName not in field_name_target:
-#                 continue
-#
-#             outFeature.SetField(outLayerDefn.GetFieldDefn(i).GetNameRef(),
-#                 inFeature.GetField(i))
-
-def join_lines(input_shp,input2_shp="DEFAULT",buffer_size=1000):
-    '''
-    input_shp and input2_shp: input shape files, may come from NSEW_Neighbourhood function
-    '''
-    driver = ogr.GetDriverByName("ESRI Shapefile")
-    dataSource = driver.Open(input_shp, 1)
-    layer = dataSource.GetLayer()
-
-    driver2 = ogr.GetDriverByName("ESRI Shapefile")
-    dataSource2 = driver2.Open(input2_shp, 1)
-    layer2 = dataSource2.GetLayer()
-
-    for feature in layer:
-        geom = feature.GetGeometryRef()
-        first_vertice = geom.GetPoint(0)
-        last_vertice = geom.GetPoint(geom.GetPointCount() - 1)
-
-        point = ogr.Geometry(ogr.wkbPoint)
-        point.AddPoint(first_vertice[0], first_vertice[1],first_vertice[2])
-        # filter layer with buffer
-        spatial_selection = layer.SetSpatialFilter(point.Buffer(buffer_size))
-        spatial_selection2 = layer2.SetSpatialFilter(point.Buffer(buffer_size))
-
-        print "First Vertice is {}. Last Vertice {}.".format(first_vertice,last_vertice)
-        print "Found {} features in layer after spatial selection".format(layer.GetFeatureCount())
-        print "Found {} features in layer2 after spatial selection".format(layer2.GetFeatureCount())
-        for feature in spatial_selection:
-            for feature2 in spatial_selection2:
-                print feature.GetGeometryRef().Distance(feature2.GetGeometryRef())
-
-shps = ['/Users/Valentin/Documents/GIS-Daten/DEM-Processing-Pipeline/data/export_3_1.shp','/Users/Valentin/Documents/GIS-Daten/DEM-Processing-Pipeline/data/export_10_1.shp']
-join_lines(shps[0],shps[1],buffer_size=1000)
-
-
-
-input_shp = shps[0]
-input2_shp = shps[1]
-
-
 def getLength(feature):
     # wkt = "LINESTRING (1181866.263593049 615654.4222507705, 1205917.1207499576 623979.7189589312, 1227192.8790041457 643405.4112779726, 1224880.2965852122 665143.6860159477)"
     # geom = ogr.CreateGeometryFromWkt(wkt)
@@ -499,52 +415,52 @@ def get_tifs(directory):
 #create_raster_ring('/Volumes/TOSHIBA EXT/EU-DEM/tiles/1.tif',src_bounds,10000)
 #create_vrt(['/Volumes/TOSHIBA EXT/EU-DEM/tiles/1.tif','/Volumes/TOSHIBA EXT/EU-DEM/tiles/10.tif'],outpath="DEFAULT",no_data_value=0)
 
-# if __name__ == '__main__':
-#     tifs = get_tifs('/Volumes/TOSHIBA EXT/EU-DEM/tiles/')
-#     all_bounds = {}
-#     for tif in tifs:
-#         all_bounds[tif] = get_bounds(tif)
-#
-#     # 1. Create contour lines for each raster tile
-#     tile_contours = []
-#     for tif in tifs:
-#         # creates a 10 m spaced contour line dataset with a default file ending of *_contour.shp
-#         tile_contours.append(create_contours(tif, 10, shp_path="DEFAULT", contour_base=0, no_data=1,no_data_value=0))
-#
-#     # 2.1 Create new raster buffer zone (cut holes in each tile and merge them together to a vrt)
-#     # 2.2 Create a seemless vrt raster file from all tiles
-#     input_rasters = []
-#     for tif in tifs:
-#         src_bounds = all_bounds[tif]
-#         create_raster_ring(tif,src_bounds,5000)
-#         input_rasters.append(tif[:-4]+'_crop.tif')
-#     vrt = create_vrt(input_rasters,outpath="DEFAULT",no_data_value=0)
-#
-#     # 3. Calculate contours in new buffer zone
-#     # creates new contour ds in buffered zone and returns the path of the new file
-#     buffer_contours = create_contours(vrt, 10, shp_path="DEFAULT", contour_base=0, no_data=1,no_data_value=0)
-#
-#     # 4. Delete all edge contour lines from tile_contours (which where created at step 1)
-#     for tif in tifs:
-#         # DEFAULT CASE:
-#         contour_shp = tif[:-4]+'_contour.shp'
-#         src_bounds = all_bounds[tif]
-#         other_bounds = {i:all_bounds[i] for i in all_bounds if i!=tif}
-#         print '\n',other_bounds
-#         #raw_input("Press a key to continue...")
-#         delete_with_thresh(contour_shp ,src_bounds,other_bounds,5000, 500,max_len=5000)
-#
-#     # 5. Take all contours from buffered contours and copy them into their tile contour partner
-#     for tif in tifs:
-#         input_shp = buffer_contours
-#         src_bounds = all_bounds[tif]
-#         other_bounds = {i:all_bounds[i] for i in all_bounds if i!=tif}
-#         # TODO: copy_shp = "DEFAULT"
-#         # TODO: define copy_shp -> Die Features welche
-#         # ACHTUNG VEREINFACHUNG! Danach müssen die Shapefiles auf duplicate überprüft werden!!!
-#         copy_shp = tif[:-4]+'_contour.shp'
-#         copy_with_thresh(input_shp,copy_shp,src_bounds,other_bounds,5000, 100,max_len=float('inf'),min_len=1000)
-#
-#     # 6. Clean contour datasets by removing identical features and filter small features with a minimum length of 1000 m
-#     for tile_contour in tile_contours:
-#         clean_features(input_shp, max_len=float('inf'), min_len=1000)
+if __name__ == '__main__':
+    tifs = get_tifs('/Volumes/TOSHIBA EXT/EU-DEM/tiles/')
+    all_bounds = {}
+    for tif in tifs:
+        all_bounds[tif] = get_bounds(tif)
+
+    # 1. Create contour lines for each raster tile
+    tile_contours = []
+    for tif in tifs:
+        # creates a 10 m spaced contour line dataset with a default file ending of *_contour.shp
+        tile_contours.append(create_contours(tif, 10, shp_path="DEFAULT", contour_base=0, no_data=1,no_data_value=0))
+
+    # 2.1 Create new raster buffer zone (cut holes in each tile and merge them together to a vrt)
+    # 2.2 Create a seemless vrt raster file from all tiles
+    input_rasters = []
+    for tif in tifs:
+        src_bounds = all_bounds[tif]
+        create_raster_ring(tif,src_bounds,5000)
+        input_rasters.append(tif[:-4]+'_crop.tif')
+    vrt = create_vrt(input_rasters,outpath="DEFAULT",no_data_value=0)
+
+    # 3. Calculate contours in new buffer zone
+    # creates new contour ds in buffered zone and returns the path of the new file
+    buffer_contours = create_contours(vrt, 10, shp_path="DEFAULT", contour_base=0, no_data=1,no_data_value=0)
+
+    # 4. Delete all edge contour lines from tile_contours (which where created at step 1)
+    for tif in tifs:
+        # DEFAULT CASE:
+        contour_shp = tif[:-4]+'_contour.shp'
+        src_bounds = all_bounds[tif]
+        other_bounds = {i:all_bounds[i] for i in all_bounds if i!=tif}
+        print '\n',other_bounds
+        #raw_input("Press a key to continue...")
+        delete_with_thresh(contour_shp ,src_bounds,other_bounds,5000, 500,max_len=5000)
+
+    # 5. Take all contours from buffered contours and copy them into their tile contour partner
+    for tif in tifs:
+        input_shp = buffer_contours
+        src_bounds = all_bounds[tif]
+        other_bounds = {i:all_bounds[i] for i in all_bounds if i!=tif}
+        # TODO: copy_shp = "DEFAULT"
+        # TODO: define copy_shp -> Die Features welche
+        # ACHTUNG VEREINFACHUNG! Danach müssen die Shapefiles auf duplicate überprüft werden!!!
+        copy_shp = tif[:-4]+'_contour.shp'
+        copy_with_thresh(input_shp,copy_shp,src_bounds,other_bounds,5000, 100,max_len=float('inf'),min_len=1000)
+
+    # 6. Clean contour datasets by removing identical features and filter small features with a minimum length of 1000 m
+    for tile_contour in tile_contours:
+        clean_features(input_shp, max_len=float('inf'), min_len=1000)

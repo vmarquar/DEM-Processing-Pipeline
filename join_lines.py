@@ -149,28 +149,65 @@ def join_lines(buffer_size,input_shp,input2_shp="DEFAULT"):
     dataSource = None
     del dataSource
 
+def get_shps(directory):
+    """
+    provide directory with a trailing slash, e.g. path/to/my/dir/
+    """
+    #shps10_99 =  glob.glob(directory+'[0-9][0-9].shp')
+    #shps0_9 =  glob.glob(directory+'[0-9].shp')
+    #return (tifs0_9+tifs10_99)
+    return glob.glob(directory+'*.shp')
+
+def get_bounds(input_path):
+    """
+    gets bounding corners of a raster (approximated as a square)
+    counterclockwise from llx,lly -> lrx,lry -> urx,ury -> ulx,uly
+    """
+    src = gdal.Open(input_path)
+    ulx, xres, xskew, uly, yskew, yres = src.GetGeoTransform()
+    lrx = ulx + (src.RasterXSize * xres)
+    lry = uly + (src.RasterYSize * yres)
+
+    # can be deleted and replaced by line 21 after dev phase
+    ll = [ulx,lry] # lower left
+    lr = [lrx,lry] # lower right
+    ur = [lrx,uly] # upper right
+    ul = [ulx,uly] # upper left
+    return [ll,lr,ur,ul]
+
+def NSEW_Neighbourhood(src_bounds,other_bounds,thresh):
+    """
+    checks the N,S,E,W Neighbourhood for tiles
+    src_bounds: list obtained from get_bounds of the source vector_layer
+    other_bounds: dict of all other raster boundaries {vector_name: [list of bounds]}
+    get mean point of each direction and add threshhold
+    returns: [[direction, vector path], [direction, vector path], ...]
+    """
+    mean_N = [((src_bounds[2][0]+src_bounds[3][0])/2), (((src_bounds[2][1]+src_bounds[3][1])/2)+thresh)]
+    mean_S = [((src_bounds[0][0]+src_bounds[1][0])/2), (((src_bounds[0][1]+src_bounds[1][1])/2)-thresh)]
+    mean_E = [(((src_bounds[1][0]+src_bounds[2][0])/2)+thresh), ((src_bounds[1][1]+src_bounds[2][1])/2)]
+    mean_W = [(((src_bounds[0][0]+src_bounds[3][0])/2)-thresh), ((src_bounds[0][1]+src_bounds[3][1])/2)]
+
+    neighbours = []
+    for vector_layer, bounds in other_bounds.iteritems():
+        ll,lr,ur,ul = bounds
+        # check if mean points are in a bounding box of a other vector_layer
+        # assumes a rectangle vector_layer file aligned to x,y axis
+        directions = {'N':mean_N,'S':mean_S,'E':mean_E,'W':mean_W}
+
+        # TODO TODO FEHLER IN DER LOGISCHEN ABFRAGE -> KEIN ERGEBNIS
+        for direction, point in directions.iteritems(): # TOCHECK TODO
+            #print direction, point, [ll,lr,ur,ul]
+            # xmin < xtest < xmax and ymin < ytest < ymax
+            if (point[0] >= ll[0] and point[0] <= ur[0]) and (point[1] >= ll[1] and point[1] <= ur[1]):
+                print "located: "+vector_layer+' in the '+direction
+                neighbours.append([direction,vector_layer])
+
+        # TODO Exit bei vier rastern!
+        if len(neighbours) > 3:
+            return neighbours
+            # returns a list of neighbours -> [['N',raster1],'S','raster2'...]
+
+    return neighbours
+
 join_lines(buffer_size,input_shp, input2_shp)
-
-
-# Possibilites on GetGeometryRef()
-# first_geom.GetX()
-# first_geom.GetY()
-# first_geom.GetZ()
-    #
-    # spatial_selection = layer
-    # spatial_selection.SetSpatialFilter(point.Buffer(buffer_size))
-    # spatial_selection2 = layer2
-    # spatial_selection2.SetSpatialFilter(point.Buffer(buffer_size))
-    # print "Found {} features in layer ".format(layer.GetFeatureCount())
-    # print "Found {} features in layer2 ".format(layer2.GetFeatureCount())
-    # print "Spatial Selection is {}. Spatial Selection 2 {}.".format(spatial_selection,spatial_selection2)
-    # print "First Vertice is {}. Last Vertice {}.".format(first_vertice,last_vertice)
-    # print "Found {} features in layer after spatial selection".format(spatial_selection.GetFeatureCount())
-    # print "Found {} features in layer2 after spatial selection".format(spatial_selection2.GetFeatureCount())
-    # for spatial_feature in spatial_selection:
-    #     for feature2 in spatial_selection2:
-    #         print spatial_feature.GetGeometryRef().Distance(feature2.GetGeometryRef())
-    #
-    # #reset spatial selection
-    # layer.SetSpatialFilterRect(ext[0],ext[1],ext[2],ext[3])
-    # layer2.SetSpatialFilterRect(ext2[0],ext2[1],ext2[2],ext2[3])
