@@ -9,12 +9,6 @@ import gdal, glob, subprocess, os
 from osgeo.gdalconst import *
 from osgeo import ogr
 
-#shps = ['/Users/Valentin/Documents/GIS-Daten/DEM-Processing-Pipeline/data/export_3_1.shp','/Users/Valentin/Documents/GIS-Daten/DEM-Processing-Pipeline/data/export_10_1.shp']
-shps = ['/Users/Valentin/Documents/GIS-Daten/DEM-Processing-Pipeline/data/c1.shp','/Users/Valentin/Documents/GIS-Daten/DEM-Processing-Pipeline/data/c2.shp']
-input_shp = shps[0]
-input2_shp = shps[1]
-buffer_size = 50
-
 # TODO: enable first point joining (or check if its needed!)
 def join_lines(buffer_size,input_shp,input2_shp="DEFAULT"):
 
@@ -158,22 +152,27 @@ def get_shps(directory):
     #return (tifs0_9+tifs10_99)
     return glob.glob(directory+'*.shp')
 
-def get_bounds(input_path):
+def get_shp_bounds(input_shp):
     """
-    gets bounding corners of a raster (approximated as a square)
+    gets minimum bounding rectangle (mbr)
     counterclockwise from llx,lly -> lrx,lry -> urx,ury -> ulx,uly
     """
-    src = gdal.Open(input_path)
-    ulx, xres, xskew, uly, yskew, yres = src.GetGeoTransform()
-    lrx = ulx + (src.RasterXSize * xres)
-    lry = uly + (src.RasterYSize * yres)
+    try:
+        driver = ogr.GetDriverByName("ESRI Shapefile")
+        dataSource = driver.Open(input_shp, 0)
+        layer = dataSource.GetLayer()
 
-    # can be deleted and replaced by line 21 after dev phase
-    ll = [ulx,lry] # lower left
-    lr = [lrx,lry] # lower right
-    ur = [lrx,uly] # upper right
-    ul = [ulx,uly] # upper left
-    return [ll,lr,ur,ul]
+        minx, maxx, miny, maxy = layer.GetExtent() # (1227841.2311797712, 1253712.155662728, 6101830.197181817, 6115091.489706456) > bounds for test1.shp
+
+        ll = [minx,miny] # lower left
+        lr = [maxx,miny] # lower right
+        ur = [maxx,maxy] # upper right
+        ul = [minx,maxy] # upper left
+        return [ll,lr,ur,ul]
+
+    except Exception as e:
+        print "Could not compute bounding box. Reasons may be that there are no geometries in the layer, the bounding box isnt precomputed etc.\n"
+        print "Following error occured: {}".format(e)
 
 def NSEW_Neighbourhood(src_bounds,other_bounds,thresh):
     """
@@ -210,4 +209,36 @@ def NSEW_Neighbourhood(src_bounds,other_bounds,thresh):
 
     return neighbours
 
-join_lines(buffer_size,input_shp, input2_shp)
+#join_lines(buffer_size,input_shp, input2_shp)
+
+# Variables:
+shp_path = '/Volumes/TOSHIBA EXT/test-contours/'
+buffer_size = 50 #50 - 100 [m], depends on slope
+neighbourhood_thresh = 500 #[m]
+
+
+
+if __name__ == '__main__':
+    shps = get_shps(shp_path)
+    all_bounds = {}
+    neighbours = {} # {'src_shape','neighbour_list'}
+    for shp in shps:
+        # compute mbr's for all shapefiles
+        all_bounds[shp] = get_shp_bounds(shp)
+
+
+
+        # Compute neighbours
+        src_bounds = all_bounds[shp]
+        other_bounds = {i:all_bounds[i] for i in all_bounds if i!=shp}
+        #print "src_bounds {}. other_bounds {}".format(src_bounds,other_bounds)
+        neighbours[shp] = NSEW_Neighbourhood(src_bounds,other_bounds,neighbourhood_thresh)
+
+        # Connect shapelines
+        for neighbour in neighbours[shp]:
+            if neighbour != []:
+                direction = neighbour[0]
+                filename = neighbour[1]
+                print "found neighbour ({}) in the {}.".format(filename,direction)
+                join_lines(buffer_size,shp,filename)
+                print "\n\n\n NEW ITERATION NEW ITERATION \n\n\n"
