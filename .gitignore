@@ -1,0 +1,8 @@
+#Ignores following types to be added to the git repository
+*.lock
+*.gdb
+/data/tmp/*
+export*
+.DS_Store
+c1*
+c2*
