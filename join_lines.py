@@ -15,7 +15,7 @@ input_shp = shps[0]
 input2_shp = shps[1]
 buffer_size = 50
 
-
+# TODO: enable first point joining (or check if its needed!)
 def join_lines(buffer_size,input_shp,input2_shp="DEFAULT"):
 
     driver = ogr.GetDriverByName("ESRI Shapefile")
