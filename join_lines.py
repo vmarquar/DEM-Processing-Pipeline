@@ -9,6 +9,72 @@ import gdal, glob, subprocess, os
 from osgeo.gdalconst import *
 from osgeo import ogr
 
+
+    # ideen: selection über entweder intersect, contains, copylayer > SetSpatialFilter or SetSpatialFilterRect
+    # TODO: spatial filter on "shape file buffer zone"
+
+#def spatial_select(input_shp,src_bounds,other_bounds,neighbourhood_thresh, negative_buffer_in_m):
+def spatial_select(input_shp,src_bounds,direction, negative_buffer_in_m):
+    """
+    Return Selection layer for selected side
+    input_shp: path of input shapefile
+    src_bounds: src bounds of raster
+    buffer_direction: either N,S,E,W; direction where the buffer should be applied
+    negative_buffer_in_m: slice thickness from outer boundy of input raster to the inside
+    """
+    ll = src_bounds[0]
+    lr = src_bounds[1]
+    ur = src_bounds[2]
+    ul = src_bounds[3]
+
+    slice_ftr = ogr.Geometry(ogr.wkbLinearRing)
+    if direction == 'N':
+        slice_ftr.AddPoint(ul[0],ul[1])
+        slice_ftr.AddPoint(ur[0],ur[1])
+        slice_ftr.AddPoint(ur[0],ur[1]-negative_buffer_in_m)
+        slice_ftr.AddPoint(ul[0],ul[1]-negative_buffer_in_m)
+    if direction == 'S':
+        slice_ftr.AddPoint(ll[0],ll[1])
+        slice_ftr.AddPoint(lr[0],lr[1])
+        slice_ftr.AddPoint(lr[0],lr[1]+negative_buffer_in_m)
+        slice_ftr.AddPoint(ll[0],ll[1]+negative_buffer_in_m)
+    if direction == 'E':
+        slice_ftr.AddPoint(lr[0],lr[1])
+        slice_ftr.AddPoint(ur[0],ur[1])
+        slice_ftr.AddPoint(ur[0],ur[1]-negative_buffer_in_m)
+        slice_ftr.AddPoint(lr[0],lr[1]-negative_buffer_in_m)
+    if direction == 'W':
+        slice_ftr.AddPoint(ll[0],ll[1])
+        slice_ftr.AddPoint(ul[0],ul[1])
+        slice_ftr.AddPoint(ul[0],ul[1]+negative_buffer_in_m)
+        slice_ftr.AddPoint(ll[0],ll[1]+negative_buffer_in_m)
+
+    # Create polygon
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometry(slice_ftr)
+    wkt = poly.ExportToWkt()
+    try:
+        driver = ogr.GetDriverByName("ESRI Shapefile")
+        dataSource = driver.Open(input_shp, 1)
+        layer = dataSource.GetLayer()
+        tmp = dataSource.CopyLayer(layer,'tmp_copy')
+        tmp.SetSpatialFilter(ogr.CreateGeometryFromWkt(wkt))
+
+        print wkt
+        try:
+            print "Selected DS has now {} features. Previous Layer had {} features".format(tmp.GetFeatureCount(),layer.GetFeatureCount())
+            return {'tmp_layer':tmp,'origin_ds':dataSource}
+            pass
+        except Exception as e:
+            print "Error in selecting features. Maybe already selected?"
+            dataSource = None
+            del dataSource
+            pass
+        pass
+    except Exception as e:
+        print "wkt probably does not exist."
+        pass
+
 # TODO: enable first point joining (or check if its needed!)
 def join_lines(buffer_size,input_shp,input2_shp="DEFAULT"):
 
@@ -209,25 +275,13 @@ def NSEW_Neighbourhood(src_bounds,other_bounds,thresh):
 
     return neighbours
 
-#join_lines(buffer_size,input_shp, input2_shp)
-
-# Variables:
-shp_path = '/Volumes/TOSHIBA EXT/test-contours/'
-buffer_size = 50 #50 - 100 [m], depends on slope
-neighbourhood_thresh = 500 #[m]
-
-
-
-if __name__ == '__main__':
+def join_lines_not_optimized(shp_path,buffer_size,neighbourhood_thresh):
     shps = get_shps(shp_path)
     all_bounds = {}
     neighbours = {} # {'src_shape','neighbour_list'}
     for shp in shps:
         # compute mbr's for all shapefiles
         all_bounds[shp] = get_shp_bounds(shp)
-
-
-
         # Compute neighbours
         src_bounds = all_bounds[shp]
         other_bounds = {i:all_bounds[i] for i in all_bounds if i!=shp}
@@ -242,3 +296,59 @@ if __name__ == '__main__':
                 print "found neighbour ({}) in the {}.".format(filename,direction)
                 join_lines(buffer_size,shp,filename)
                 print "\n\n\n NEW ITERATION NEW ITERATION \n\n\n"
+
+def join_lines_optimized(shp_path,buffer_size,neighbourhood_thresh,negative_buffer_in_m):
+    shps = get_shps(shp_path)
+    all_bounds = {}
+    neighbours = {} # {'src_shape','neighbour_list'}
+    tmp_layers = []
+    for shp in shps:
+        # compute mbr's for all shapefiles
+        all_bounds[shp] = get_shp_bounds(shp)
+
+        # Compute neighbours
+        src_bounds = all_bounds[shp]
+        other_bounds = {i:all_bounds[i] for i in all_bounds if i!=shp}
+        #print "src_bounds {}. other_bounds {}".format(src_bounds,other_bounds)
+        neighbours[shp] = NSEW_Neighbourhood(src_bounds,other_bounds,neighbourhood_thresh)
+
+        # Connect shapelines
+        for neighbour in neighbours[shp]:
+            if len(neighbour) >0:
+
+                direction = neighbour[0]
+                filename = neighbour[1]
+                # spatial select: returns {'tmp_layer':tmp,'origin_ds':dataSource}
+                y = spatial_select(shp,src_bounds,direction, negative_buffer_in_m)
+                small_shp = y['tmp_layer']
+                small_shp_datasource = y['origin_ds']
+
+                if direction == 'N':
+                    neg_direction = 'S'
+                if direction == 'S':
+                    neg_direction = 'N'
+                if direction == 'E':
+                    neg_direction = 'W'
+                if direction == 'W':
+                    neg_direction = 'E'
+
+                x = spatial_select(filename,src_bounds,neg_direction, negative_buffer_in_m)
+                small_neighbour = x['tmp_layer']
+                small_neighbour_datasource = x['origin_ds']
+
+                print "found neighbour ({}) in the {}.".format(filename,direction)
+                join_lines(buffer_size,small_shp,small_neighbour)
+
+                # TODO delete tmp layers & close ds
+                small_neighbour_datasource.DeleteLayer(small_neighbour)
+                small_shp_datasource.DeleteLayer(small_shp)
+                print "\n\n\n NEW ITERATION NEW ITERATION \n\n\n"
+
+# Variables:
+shp_path = '/Volumes/TOSHIBA EXT/test-contours/select/'
+buffer_size = 65 #50 - 100 [m], depends on slope
+neighbourhood_thresh = 500 #[m]
+negative_buffer_in_m = 200 # [m]
+
+if __name__ == '__main__':
+    join_lines_optimized(shp_path,buffer_size,neighbourhood_thresh,negative_buffer_in_m)

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1375f61a-2a20-4b37-846d-0eecba586d2d" name="Default" comment="" />
+    <list default="true" id="1375f61a-2a20-4b37-846d-0eecba586d2d" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/join_lines.py" afterPath="$PROJECT_DIR$/join_lines.py" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -12,11 +14,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="join_lines.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="join_lines.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/join_lines.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+            <state relative-caret-position="390">
+              <caret line="255" column="19" lean-forward="true" selection-start-line="255" selection-start-column="19" selection-end-line="255" selection-end-column="19" />
               <folding>
                 <element signature="e#190#223#0" expanded="true" />
               </folding>
@@ -28,17 +30,17 @@
         <entry file="file:///Library/Frameworks/GDAL.framework/Versions/1.11/Python/2.7/site-packages/ogr.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="75">
-              <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+              <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ogr.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ogr.py" pinned="false" current-in-tab="false">
         <entry file="file:///Library/Frameworks/GDAL.framework/Versions/1.11/Python/2.7/site-packages/osgeo/ogr.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-7513">
-              <caret line="1507" column="76" lean-forward="true" selection-start-line="1507" selection-start-column="76" selection-end-line="1507" selection-end-column="76" />
+            <state relative-caret-position="516">
+              <caret line="638" column="0" lean-forward="false" selection-start-line="638" selection-start-column="0" selection-end-line="638" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -88,6 +90,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
@@ -113,7 +116,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="RunDashboard">
@@ -290,7 +292,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/join_lines.py</url>
-          <line>40</line>
+          <line>33</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
@@ -309,6 +311,32 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/join_lines.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+          <folding>
+            <element signature="e#190#223#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Library/Frameworks/GDAL.framework/Versions/1.11/Python/2.7/site-packages/ogr.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Library/Frameworks/GDAL.framework/Versions/1.11/Python/2.7/site-packages/osgeo/ogr.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="22605">
+          <caret line="1507" column="76" lean-forward="true" selection-start-line="1507" selection-start-column="76" selection-end-line="1507" selection-end-column="76" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/join_lines.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -439,29 +467,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/join_lines.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
-          <folding>
-            <element signature="e#190#223#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///Library/Frameworks/GDAL.framework/Versions/1.11/Python/2.7/site-packages/ogr.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
-          <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+          <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file:///Library/Frameworks/GDAL.framework/Versions/1.11/Python/2.7/site-packages/osgeo/ogr.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-7513">
-          <caret line="1507" column="76" lean-forward="true" selection-start-line="1507" selection-start-column="76" selection-end-line="1507" selection-end-column="76" />
+        <state relative-caret-position="516">
+          <caret line="638" column="0" lean-forward="false" selection-start-line="638" selection-start-column="0" selection-end-line="638" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/join_lines.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="255" column="19" lean-forward="true" selection-start-line="255" selection-start-column="19" selection-end-line="255" selection-end-column="19" />
+          <folding>
+            <element signature="e#190#223#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
